@@ -5,7 +5,6 @@ import math
 import random
 import time
 
-# Initial car position
 car_x = 250
 car_y = 250
 car_speed = 5
@@ -88,11 +87,7 @@ def draw_lane():
 
 
 def draw_circle_points(cx, cy, x, y):
-    """
-    Draws all 8 symmetrical points for the circle.
-    cx, cy: Center of the circle.
-    x, y: Current point relative to the center.
-    """
+
     draw_points(cx + x, cy + y, 5)  # Octant 1
     draw_points(cx - x, cy + y, 5)  # Octant 2
     draw_points(cx + x, cy - y, 5)  # Octant 7
@@ -105,13 +100,9 @@ def draw_circle_points(cx, cy, x, y):
 
 
 def draw_circle(cx, cy, radius):
-    """
-    Draws a smooth circle using trigonometric functions.
-    cx, cy: Center of the circle.
-    radius: Radius of the circle.
-    """
+
     glBegin(GL_POLYGON)
-    num_segments = 100  # Higher number for smoother circles
+    num_segments = 100 
     for i in range(num_segments):
         theta = 2.0 * math.pi * i / num_segments
         x = radius * math.cos(theta)
@@ -122,11 +113,10 @@ def draw_circle(cx, cy, radius):
     
     
 def draw_car():
-    """Draws the car using rectangles and circles."""
     global car_x, car_y
 
     # Car body
-    glColor3f(1.0, 0.0, 0.0)  # Red color
+    glColor3f(1.0, 0.0, 0.0)
     glBegin(GL_POLYGON)
     glVertex2f(car_x - 50, car_y - 25)
     glVertex2f(car_x + 50, car_y - 25)
@@ -135,7 +125,7 @@ def draw_car():
     glEnd()
 
     # Car roof
-    glColor3f(0.8, 0.0, 0.0)  # Darker red
+    glColor3f(0.8, 0.0, 0.0) 
     glBegin(GL_POLYGON)
     glVertex2f(car_x - 30, car_y + 25)
     glVertex2f(car_x + 30, car_y + 25)
@@ -157,22 +147,16 @@ def draw_car():
 
 
 def random_color():
-    """
-    Generates a random RGB color.
-    """
     return random.random(), random.random(), random.random()
 
 
 def obstacles(x, y, s):
-    color = random_color()  # Generate a random color
+    color = random_color() 
     is_circle = random.choice([True, False])
     
-    if is_circle:
-        glColor3f(*color)
-        draw_circle(x, y, s // 2)  # Draw a circle with radius (size / 2)
-    else:
-        glColor3f(*color)
-        mpl(x, y, x, y, s)
+    glColor3f(*color)
+    draw_circle(x, y, s // 2) 
+
 
 def mpl(x0, y0, x1, y1, s):
     zone = find_zone(x0, y0, x1, y1)
@@ -350,9 +334,8 @@ def iterate():
 def showScreen():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()
-    
-    # Set background color to dark blue
-    glClearColor(0.0, 0.0, 0.2, 1.0)  # RGB values for dark blue
+
+    glClearColor(0.0, 0.0, 0.2, 1.0)  
 
     iterate()
     animate()
