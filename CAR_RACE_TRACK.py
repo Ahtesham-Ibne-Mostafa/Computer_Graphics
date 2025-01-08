@@ -5,21 +5,6 @@ import math
 import random
 import time
 
-car_x = 250
-car_y = 250
-car_speed = 5
-
-start_time = time.time()
-score = 0
-r, g, b = 0, 0.3, 0
-game_state = {"game_over": False, "pause": False, "score": 0}
-car_state = {"speed": 0.5}
-lane_x , lane_y = 150, 430
-car_x, car_y = 225, 40
-cars = []
-
-
-
 
 class Car:
     global car_y, car_state
@@ -357,6 +342,19 @@ def showScreen():
     play_game()
     glutSwapBuffers()
 
+
+car_x = 250
+car_y = 250
+car_speed = 5
+
+start_time = time.time()
+score = 0
+r, g, b = 0, 0.3, 0
+game_state = {"game_over": False, "pause": False, "score": 0}
+car_state = {"speed": 0.5}
+lane_x , lane_y = 150, 430
+car_x, car_y = 225, 40
+cars = []
 
 glutInit()
 glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGB)
