@@ -632,7 +632,7 @@ def showScreen():
     if game_over:
         render_text(400, 750, "GAME OVER", font=GLUT_BITMAP_HELVETICA_18)
         render_text(400, 710, "Press R to Restart", font=GLUT_BITMAP_HELVETICA_18)
-        drawp_layer()  # Draw the player in a stationary state (if game is over)
+        draw_player()  # Draw the player in a stationary state (if game is over)
     else:
         render_scene()  # Continue drawing the game scene (if active)
 
