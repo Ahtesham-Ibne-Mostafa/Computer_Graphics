@@ -19,18 +19,31 @@ STEP = 15  # Step between grid points
 # Camera-related variables
 camera_pos = [0,180,255]
 turn_in_progress = True
+
+
+#depreciated vars##########
 cheat_vision=False
 cheat_mode=False
+###############################
 first_person = True  # Flag for first-person view
 fovY = 120  # Field of view
 GRID_LENGTH = 299  # Length of grid lines (total size 299*2=598)
+####XXXXXXXXXXXXXXXXXXX#############
 rand_var = 423
 start_time = time.time()  # Record the start time for enemy fattening
+
+#######XXXXXXXXX#################
 enemy_pos=[]
+##################################
 player_rotation = 0
 player_pos = [0, 0]
 hits=0
 player_life=5
+########################################
+
+
+
+# REQ###########
 boolet_pos = []  # Stores the current position of the boolet
 boolet_direction = [] 
 enemy_boolet_pos = []  # Stores the current position of the boolet
@@ -39,8 +52,9 @@ megido_ark_pos=[0,100,300]
 megido_mode=False
 turn_cycles=0
 
-
+##########
 boolets_missed=0
+############
 game_end_flag=False
 win=None
 loss=False
@@ -50,19 +64,19 @@ game_end_condition=0
 
 regular_condition_player=1
 game_end_condition_player=0
-
+########################
 left_arm_angle=-90
 right_arm_angle=-90
 sword_angle=-20
+########################
 enemy_position = (0, 0)
 last_action=''
 def limit_fps(target_fps):
-  
-    start_time = time.time()
-
-    end_time = time.time()
+    start_time = time.perf_counter()
+    # Frame processing happens here
+    end_time = time.perf_counter()
     frame_time = end_time - start_time
-    target_frame_time = 1 / target_fps  # Convert target 
+    target_frame_time = 1 / target_fps
     if frame_time < target_frame_time:
         time.sleep(target_frame_time - frame_time)
 
@@ -106,22 +120,22 @@ class Player:
         self.resistance=None
 
         self.alive_status=True
-    def move(self, direction, distance):
-        radians = math.radians(self.rotation)
-        if direction == "forward":
-            self.position[0] += distance * math.sin(-radians)
-            self.position[1] += distance * math.cos(-radians)
-        elif direction == "backward":
-            self.position[0] -= distance * math.sin(-radians)
-            self.position[1] -= distance * math.cos(-radians)
+    # def move(self, direction, distance):
+    #     radians = math.radians(self.rotation)
+    #     if direction == "forward":
+    #         self.position[0] += distance * math.sin(-radians)
+    #         self.position[1] += distance * math.cos(-radians)
+    #     elif direction == "backward":
+    #         self.position[0] -= distance * math.sin(-radians)
+    #         self.position[1] -= distance * math.cos(-radians)
 
-        # Constrain within circular boundary
-        distance_from_center = math.hypot(self.position[0], self.position[1])
-        if distance_from_center > GRID_RADIUS - 10:  # Add a small margin to prevent going outside
-            # Push the player back to the boundary
-            angle = math.atan2(self.position[1], self.position[0])
-            self.position[0] = (GRID_RADIUS - 10) * math.cos(angle)
-            self.position[1] = (GRID_RADIUS - 10) * math.sin(angle)
+    #     # Constrain within circular boundary
+    #     distance_from_center = math.hypot(self.position[0], self.position[1])
+    #     if distance_from_center > GRID_RADIUS - 10:  # Add a small margin to prevent going outside
+    #         # Push the player back to the boundary
+    #         angle = math.atan2(self.position[1], self.position[0])
+    #         self.position[0] = (GRID_RADIUS - 10) * math.cos(angle)
+    #         self.position[1] = (GRID_RADIUS - 10) * math.sin(angle)
 
     def rotate(self, angle):
         self.rotation = (self.rotation + angle) % 360
@@ -214,7 +228,7 @@ class Player:
 
         self.magic_execution_mode = True
         self.magic_state = 0  # Start action sequence
-        skills=[self.skill1,self.skill2,self.skill3]
+        skills=[self.skill1,self.skill2,self.skill3,self.skill4]
         self.total_skill=skills[skill-1]
         if skill=='':
             self.skill_trigger=skill
@@ -244,11 +258,14 @@ class Player:
                 # elif self.skill_trigger=='fire':
                 #     self.fire_boolet([1,0,0])
                 print(boolet_pos)
-                self.action_execution_mode = False
-                self.action_state = 5
+                
+          
                 self.magic_state = 2  # End of magic action
                 print(self.magic_state)
-            elif self.magic_state == 2:  # Step 3: End action
+            elif self.magic_state==2:
+                if len(boolet_pos)==0:
+                    self.magic_state=3
+            elif self.magic_state == 3:  # Step 3: End action
                 self.reset_position()
                 self.magic_execution_mode = False
                 self.magic_state = 5  # Reset for next time
@@ -291,7 +308,8 @@ class Player:
     def use_support_skill(self,skill):
         global last_action
         fail=False
-        diff=''
+        enemy_buff=False
+        dif=''
         if skill[7]=='team':
            
             teammates=[p1,p2,p3,p4]
@@ -318,14 +336,15 @@ class Player:
                             fail=True
                             last_action=f'Magic already at max rank'
                     elif skill[5]=='debuff':
+                        fail=True
+                        dif='debuff'
                         print('enter')
                         for buff in range(len(team.buff_debuff)):
                             if team.buff_debuff[buff]<0:
                                 team.buff_debuff[buff]=0
 
                       
-                        fail=True
-                        dif='debuff'
+                        
                            
                             
 
@@ -339,7 +358,7 @@ class Player:
             else:
                 last_action=f'Insufficient MP'
         elif skill[7]=='enemy':
-             if  self.player_mp>= skill[4]:
+            if  self.player_mp>= skill[4]:
                 self.player_mp-=skill[4]
                 
                 if skill[5]=='attack':
@@ -361,21 +380,25 @@ class Player:
                     else:
                         fail=True
                 elif skill[5]=='buff':
+                        
                         for buff in range(len(enemy.buff_debuff)):
                             if enemy.buff_debuff[buff]>0:
-                                team.buff_debuff[buff]=0
+                                enemy.buff_debuff[buff]=0
 
-                    
                         fail=True
-                        dif='buff'        
-
+                        enemy_buff=True
+                        dif='buff'
+                                
+                       
                 print(enemy.buff_debuff)
-                if not fail:
-                    last_action=f'{skill[5].upper()} of enemy decreased by one'
-                elif fail and diff=='buff':
-                    last_action=f'{self.name} used Dekaja. All positive effects removed!'
-                else:
-                    last_action=f'Enemy {skill[5].upper()} already at minimum rank'
+            
+            if not fail and not enemy_buff:
+                last_action=f'{skill[5].upper()} of enemy decreased by one'
+            elif fail and dif=='buff' and enemy_buff:
+                last_action=f'{self.name} used Dekaja. All positive effects removed!'
+            elif fail and dif=='' and not enemy_buff:
+                print(fail,dif)
+                last_action=f'Enemy {skill[5].upper()} already at minimum rank'
         elif skill[7]=='heal':
              if  self.player_mp>= skill[4]:
                 self.player_mp-=skill[4]
@@ -648,7 +671,7 @@ class Enemy:
             "regular_attack": 10,  # more likely to use
             "fire_of_sinai": 20,
             "deathbound": 25,
-            "omnipotence": 20,
+            "omnipotence": 22,
             "luster_candy":15,
             "debilitate": 15,
             "charge": 5  # very rarely used
@@ -742,7 +765,7 @@ class Enemy:
 
                 
 
-        self.pick_a_nigga = random.choice(players_class_list)
+        # self.pick_a_nigga = random.choice(players_class_list)
         # self.perform_regular_attack(self.pick_a_nigga) 
         # self.perform_support_skill('Debilitate')
         # if self.charged:
@@ -953,7 +976,7 @@ class Enemy:
                 extra=f' {pick[pick_debuff]} already at lowest rank.'
             if not will_it_crit or player.guarding:
 
-                damage = round(max(1, int((self.stats['attack'] * base_power) / ((player.stats['defense']*(1+(player.buff_debuff[1]/8))) + 1)))*variance*(1+(self.buff_debuff[0]/8))*damage_scaling*player.resistance['physical']*charge_multiplier)
+                damage = round(max(1, int((self.stats['attack'] * base_power) / ((player.stats['defense']*(1+(player.buff_debuff[1]/8))) + 1)*variance*(1+(self.buff_debuff[0]/8))*damage_scaling*player.resistance['physical']*charge_multiplier)))
                 player.player_hp-=damage
                 
 
@@ -1028,14 +1051,14 @@ class Enemy:
                 turn_in_progress = False
     def register_fire_of_sinai(self):
         global last_action
-        base_power=300
+        base_power=250
         extra_text=''
         for player in players_class_list:
         
             variance = random.uniform(0.85, 1.1)
         
 
-            damage = round(max(1, int((self.stats['magic'] * base_power) / ((player.stats['defense']*(1+(player.buff_debuff[1]/8))) + 1))*variance*(1+(self.buff_debuff[2]/8))*player.resistance['fire']))
+            damage = round(max(1, int((self.stats['magic'] * base_power) / ((player.stats['defense']*(1+(player.buff_debuff[1]/8))) + 1))*variance*(1+(self.buff_debuff[2]/8))*player.resistance['fire']*0.4))
             print(damage)
             if extra_text=='' and player.resistance['fire']>=1.5:
                 extra_text=' At least one player\'s weakness hit'
@@ -1100,7 +1123,7 @@ class Enemy:
         print(self.charged)
         charged_multiplier=self.charge_multiplier()
         print(self.charged,charged_multiplier)
-        damage_scaling=0.3
+        damage_scaling=0.4
         variance = random.uniform(0.85, 1.1)
         for player in players_class_list:
             will_it_hit=self.random_chance(1)
@@ -1109,7 +1132,7 @@ class Enemy:
             if will_it_hit:
                 if not will_it_crit:
 
-                    damage = round(max(1, int((self.stats['attack'] * base_power) / ((player.stats['defense']*(1+(player.buff_debuff[1]/8))) + 1)))*variance*(1+(self.buff_debuff[0]/8))*damage_scaling*player.resistance['physical']*charged_multiplier)
+                    damage = round(max(1, int((self.stats['attack'] * base_power) / ((player.stats['defense']*(1+(player.buff_debuff[1]/8))) + 1)*variance*(1+(self.buff_debuff[0]/8))*damage_scaling*player.resistance['physical']*charged_multiplier)))
                     if player.alive_status==True:
                         
                         print('uncrit',damage,player.name)
@@ -1117,7 +1140,7 @@ class Enemy:
                 
                     
                 else:
-                    damage = round(max(1, (int((self.stats['attack'] * base_power*(1+self.buff_debuff[0])) / ((player.stats['defense']*(1+(player.buff_debuff[0]/8)))+ 1)))*variance*2*(1+(self.buff_debuff[0]/8))*damage_scaling*player.resistance['physical']*charged_multiplier))
+                    damage = round(max(1, (int((self.stats['attack'] * base_power*(1+self.buff_debuff[0])) / ((player.stats['defense']*(1+(player.buff_debuff[0]/8)))+ 1)*variance*2*(1+(self.buff_debuff[0]/8))*damage_scaling*player.resistance['physical']*charged_multiplier))))
                     if player.alive_status:
                         player.player_hp-=damage
                         crits+=1
@@ -1435,29 +1458,29 @@ def initiate_people():
     p3=Player(-58.33,150,500,150,40,90,32)
     p4=Player(-175,150,350,200,10,57,66)
 
-    p1.name='Player 1'
-    p2.name='Player 2'
-    p3.name='Player 3'
-    p4.name='Player 4'
+    p1.name='Demifiend'
+    p2.name='Black Rider'
+    p3.name='Black Frost'
+    p4.name='Norn'
 
-    p1.skill1 = ['Figment Slash', '50 p accuracy, but always critical','physical', 300, 4, 0.5,1]
-    p1.skill2 = ['Akashic Arts','heavy phys attack', 'physical', 220, 5, 0.96,0.21]
+    p1.skill1 = ['Figment Slash', '50 p accuracy, but always critical','physical', 300, 10, 0.5,1]
+    p1.skill2 = ['Akashic Arts','heavy phys attack', 'physical', 250, 15, 0.96,0.21]
     p1.skill3 = ['Tarukaja', 'Attack up by one rank','support',0,10,'attack',1,'team']
     p1.skill4 = ['Dekunda', 'Remove all debuffs','support',0,10,'debuff',1,'team']
 
-    p2.skill1 = ['Bufudyne','heavy Ice Damage to one foe', 'magic_ice', 200, 10, 1]
-    p2.skill2 = ['Ziodyne','heavy electric damage' ,'magic_electricity',200, 10, 1]
+    p2.skill1 = ['Bufudyne','heavy Ice Damage to one foe', 'magic_ice', 200, 20, 1]
+    p2.skill2 = ['Ziodyne','heavy electric damage' ,'magic_electricity',200, 20, 1]
     p2.skill3 = ['Rakukaja', 'Defense up by one rank','support',0,10,'defense',1,'team'] 
     p2.skill4 = ['Makakaja', 'Magic up by one rank','support',0,10,'magic',1,'team'] 
 
 
-    p3.skill1 = ['Ice Dracostrike','ice-based physcial attack' ,'physical_ice',170,6,0.98,0.21]
-    p3.skill2 =['Makakaja','magic up by one rank', 'support',0,10,'magic',1,'team'] 
+    p3.skill1 = ['Ice Dracostrike','ice-based physcial attack' ,'physical_ice',200,25,0.98,0.21]
+    p3.skill2 =['Tarukaja','Attack up by one rank', 'support',0,10,'attack',1,'team'] 
     p3.skill3 = ['Rakunda','Downs enemy defense by one','support',0,10,'defense',-1,'enemy']
     p3.skill4 = ['Tarunda','Downs enemy attack by one','support',0,10,'attack',-1,'enemy']
 
 
-    p4.skill1 = ['Mediarama', 'medium recovery to all','support', 0, 10,0,0,'heal']
+    p4.skill1 = ['Mediarama', 'medium recovery to all','support', 0, 20,0,0,'heal']
     p4.skill2 = ['Tarunda','Downs enemy attack by one','support',0,10,'attack',-1,'enemy']
     p4.skill3 = ['Makanda','Downs enemy magic by one','support',0,10,'magic',-1,'enemy']
     p4.skill4 = ['Dekaja','Nullifies enemy buffs','support',0,10,'buff',-1,'enemy']
@@ -1476,8 +1499,8 @@ players_class_list=[p1,p2,p3,p4]
 turn_order=[p1,p2,p3,p4,enemy]
 current_player=0
 
-# enemy.hp=10
-# p1.player_hp=10
+# # enemy.hp=10
+# p1.player_hp=200
 # p2.player_hp=10
 # p3.player_hp=10
 # p4.player_hp=10
@@ -1568,32 +1591,60 @@ def update_boolets_enemy():
             del enemy_boolet_direction[i]
 
         
+def draw_fiery_background():
+    """
+    Draws a fiery effect around the mountain using animated gradients.
+    """
+    glEnable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
+    num_segments = 100  # Smoothness of the circular gradient
+    outer_radius = GRID_RADIUS * 3  # Extend the fiery effect far beyond the grid
+
+    # Time-based animation for flickering effect
+    current_time = time.time()
+    flicker_intensity = (math.sin(current_time * 5) + 1) / 2  # Oscillates between 0 and 1
+
+    glBegin(GL_TRIANGLE_FAN)
+    # Center of the fiery background (dark red)
+    glColor4f(0.8, 0.2, 0.0, 0.8 * flicker_intensity)
+    glVertex3f(0, 0, -1)  # Center point
+
+    # Outer fiery gradient (bright orange)
+    for i in range(num_segments + 1):
+        theta = 2.0 * math.pi * i / num_segments
+        x = outer_radius * math.cos(theta)
+        y = outer_radius * math.sin(theta)
+
+        # Flickering gradient colors
+        glColor4f(1.0, 0.5, 0.0, 0.5 * flicker_intensity)
+        glVertex3f(x, y, -1)
+    glEnd()
+
+    glDisable(GL_BLEND)
 
 def draw_grid():
     """
-    Draws a circular grid with concentric rings and radial lines.
-    The rings alternate between 3 soil-like brown, 4 red, and 3 soil-like brown.
+    Draws a circular grid with 3 soil-colored rings, 4 red-colored rings, and 3 soil-colored rings.
     """
     num_circles = 10  # Total number of concentric circles
     step_radius = GRID_RADIUS / num_circles  # Radius step for each circle
 
     # Define colors for the rings
-    soil_brown = (0.76, 0.60, 0.42)  # Lighter soil-like brown
-
-    red = (1.0, 0.0, 0.0)           # Red
+    soil_brown = (0.55, 0.35, 0.25)  # Soil-like brown
+    red = (1.0, 0.0, 0.0)           # Bright red
 
     # Draw concentric rings
     for i in range(1, num_circles + 1):
         radius_inner = (i - 1) * step_radius
         radius_outer = i * step_radius
 
-        # Determine the color based on the ring index
-        if i <= 3:  # First 3 rings are soil-like brown
+        # Assign colors based on the ring index
+        if i <= 3:  # First 3 rings are soil-colored
             glColor3f(*soil_brown)
-        elif 4 <= i <= 7:  # Next 4 rings are red
+        elif 4 <= i <= 7:  # Next 4 rings are red-colored
             glColor3f(*red)
-        else:  # Last 3 rings are soil-like brown
+        else:  # Last 3 rings are soil-colored
             glColor3f(*soil_brown)
 
         # Draw the ring as a quad strip
@@ -1609,13 +1660,14 @@ def draw_grid():
             glVertex3f(x_outer, y_outer, 0)  # Outer vertex
         glEnd()
 
+
 def draw_circular_wall():
     """
-    Draws a sloped circular wall around the grid, creating the illusion of a circular mountain.
+    Draws a sloped circular wall around the grid, creating the illusion of a mountain.
     """
-    wall_height = 100  # Height of the wall
-    base_radius = GRID_RADIUS * 1.5  # Radius of the base of the sloped wall
-    wall_color = [0.55, 0.27, 0.07]  # Soil-like brown color for the wall
+    wall_height = 150  # Height of the wall
+    base_radius = GRID_RADIUS * 2  # Radius of the base of the sloped wall
+    wall_color = [0.4, 0.3, 0.2]  # Dark rocky color for the wall
 
     # Set the wall color
     glColor3f(wall_color[0], wall_color[1], wall_color[2])
@@ -1637,8 +1689,8 @@ def draw_circular_wall():
         glVertex3f(x_base, y_base, -wall_height)
     glEnd()
 
-    # Draw the top edge of the wall
-    glColor3f(1, 1, 1)  # White color for the top edge
+    # Add shading to the wall
+    glColor3f(0.3, 0.2, 0.1)  # Darker shade for depth
     glBegin(GL_LINE_LOOP)
     for i in range(num_segments):
         theta = 2.0 * math.pi * i / num_segments
@@ -1646,6 +1698,8 @@ def draw_circular_wall():
         y = GRID_RADIUS * math.sin(theta)
         glVertex3f(x, y, 0)  # Top edge of the wall
     glEnd()
+
+
 def draw_text(x, y, text, font=GLUT_BITMAP_HELVETICA_12,color=[1,1,1]):
     """
     Draws 2D text on the screen at the specified (x, y) position.
@@ -1763,7 +1817,7 @@ def draw_boolet_enemy():
     for pos in enemy_boolet_pos:
         glPushMatrix()
         glTranslatef(pos[0], pos[1], pos[2])  # Move to this bullet's position
-        glColor3f(1, 0, 0)                   # Red bullet
+        glColor3f(237/256, 98/256, 28/256)                   # Red bullet
         glutSolidSphere(10, 5, 5)            # Radius 10, low-res sphere
         glPopMatrix()
 
@@ -1773,144 +1827,144 @@ def draw_boolet_enemy():
 
 #     glPopMatrix()
 
-def draw_shapes2():
-    glPushMatrix()
-    glTranslatef(-100, 0, 0)
-    # === TORSO ===
-    glColor3f(0.6, 0.6, 0.6)  # Steel gray
-    glPushMatrix()
-    glTranslatef(0, 0, 90)
-    glScalef(1, 0.5, 2)  # Wider chest
-    glutSolidCube(60)
-    glPopMatrix()
+# def draw_shapes2():
+#     glPushMatrix()
+#     glTranslatef(-100, 0, 0)
+#     # === TORSO ===
+#     glColor3f(0.6, 0.6, 0.6)  # Steel gray
+#     glPushMatrix()
+#     glTranslatef(0, 0, 90)
+#     glScalef(1, 0.5, 2)  # Wider chest
+#     glutSolidCube(60)
+#     glPopMatrix()
 
-    # === HEAD ===
-    glColor3f(1, 1, 1)  # White
-    glPushMatrix()
-    glTranslatef(0, 0, 160)
-    glutSolidCube(30)
-    glPopMatrix()
+#     # === HEAD ===
+#     glColor3f(1, 1, 1)  # White
+#     glPushMatrix()
+#     glTranslatef(0, 0, 160)
+#     glutSolidCube(30)
+#     glPopMatrix()
 
-    # === EYES ===
-    glColor3f(1, 0, 0)  # Red eyes
-    glPushMatrix()
-    glTranslatef(-8, 15, 160)
-    glutSolidSphere(3, 10, 10)
-    glTranslatef(16, 0, 0)
-    glutSolidSphere(3, 10, 10)
-    glPopMatrix()
+#     # === EYES ===
+#     glColor3f(1, 0, 0)  # Red eyes
+#     glPushMatrix()
+#     glTranslatef(-8, 15, 160)
+#     glutSolidSphere(3, 10, 10)
+#     glTranslatef(16, 0, 0)
+#     glutSolidSphere(3, 10, 10)
+#     glPopMatrix()
 
-    # === ARMS ===
-    glColor3f(0.4, 0.4, 0.4)
-    for side in [-1, 1]:
-        glPushMatrix()
-        glTranslatef(side * 50, 0, 90)
-        glScalef(0.5, 0.5, 2.5)
-        glutSolidCube(30)
-        glPopMatrix()
+#     # === ARMS ===
+#     glColor3f(0.4, 0.4, 0.4)
+#     for side in [-1, 1]:
+#         glPushMatrix()
+#         glTranslatef(side * 50, 0, 90)
+#         glScalef(0.5, 0.5, 2.5)
+#         glutSolidCube(30)
+#         glPopMatrix()
 
-    # === LEGS ===
-    glColor3f(0.3, 0.3, 0.3)
-    for side in [-1, 1]:
-        glPushMatrix()
-        glTranslatef(side * 20, 0, 15)
-        glScalef(0.6, 0.6, 2.5)
-        glutSolidCube(30)
-        glPopMatrix()
+#     # === LEGS ===
+#     glColor3f(0.3, 0.3, 0.3)
+#     for side in [-1, 1]:
+#         glPushMatrix()
+#         glTranslatef(side * 20, 0, 15)
+#         glScalef(0.6, 0.6, 2.5)
+#         glutSolidCube(30)
+#         glPopMatrix()
 
-    # === SHOULDER CANNONS ===
-    glColor3f(1, 1, 0)  # Yellow
-    for side in [-1, 1]:
-        glPushMatrix()
-        glTranslatef(side * 40, -20, 140)
-        glRotatef(-60, 1, 0, 0)
-        gluCylinder(gluNewQuadric(), 5, 5, 40, 10, 10)
-        glPopMatrix()
+#     # === SHOULDER CANNONS ===
+#     glColor3f(1, 1, 0)  # Yellow
+#     for side in [-1, 1]:
+#         glPushMatrix()
+#         glTranslatef(side * 40, -20, 140)
+#         glRotatef(-60, 1, 0, 0)
+#         gluCylinder(gluNewQuadric(), 5, 5, 40, 10, 10)
+#         glPopMatrix()
 
-    glPopMatrix()
+#     glPopMatrix()
 
 
 
-def draw_shapes():
-    global sword_angle
-    glPushMatrix()
-    glTranslatef(0, 0, 30)
+# def draw_shapes():
+#     global sword_angle
+#     glPushMatrix()
+#     glTranslatef(0, 0, 30)
 
-    # === TORSO ===
-    glColor3f(0.6, 0.1, 0.1)  # Reddish color for the robot
-    glPushMatrix()
-    glTranslatef(0, 0, 90)
-    glScalef(1, 0.5, 2)  # Wider chest
-    glutSolidCube(60)
-    glPopMatrix()
+#     # === TORSO ===
+#     glColor3f(0.6, 0.1, 0.1)  # Reddish color for the robot
+#     glPushMatrix()
+#     glTranslatef(0, 0, 90)
+#     glScalef(1, 0.5, 2)  # Wider chest
+#     glutSolidCube(60)
+#     glPopMatrix()
 
-    # === HEAD ===
-    glColor3f(0.8, 0.2, 0.2)  # Reddish color for the robot
-    glPushMatrix()
-    glTranslatef(0, 0, 160)
-    glutSolidCube(30)
-    glPopMatrix()
+#     # === HEAD ===
+#     glColor3f(0.8, 0.2, 0.2)  # Reddish color for the robot
+#     glPushMatrix()
+#     glTranslatef(0, 0, 160)
+#     glutSolidCube(30)
+#     glPopMatrix()
 
-    # === EYES (Mean looking eyes) ===
-    glColor3f(1, 0, 0)  # Red for the "mean" eyes
-    glPushMatrix()
-    glTranslatef(-8, 15, 160)
-    glutSolidSphere(4, 10, 10)  # Slightly bigger to make them look intense
-    glTranslatef(16, 0, 0)
-    glutSolidSphere(4, 10, 10)
-    glPopMatrix()
+#     # === EYES (Mean looking eyes) ===
+#     glColor3f(1, 0, 0)  # Red for the "mean" eyes
+#     glPushMatrix()
+#     glTranslatef(-8, 15, 160)
+#     glutSolidSphere(4, 10, 10)  # Slightly bigger to make them look intense
+#     glTranslatef(16, 0, 0)
+#     glutSolidSphere(4, 10, 10)
+#     glPopMatrix()
 
-    # === RIGHT ARM === (Sword arm)
-    glColor3f(0.7, 0.2, 0.2)  # Reddish color for the right arm
-    glPushMatrix()
-    glTranslatef(50, 0, 90)  # Start from right shoulder
-    glRotatef(-5, 0, 0, 1)  # Rotate to raise arm upwards
+#     # === RIGHT ARM === (Sword arm)
+#     glColor3f(0.7, 0.2, 0.2)  # Reddish color for the right arm
+#     glPushMatrix()
+#     glTranslatef(50, 0, 90)  # Start from right shoulder
+#     glRotatef(-5, 0, 0, 1)  # Rotate to raise arm upwards
 
-    # The right hand (palm facing upwards)
-    glPushMatrix()
-    glTranslatef(0, 0, 40)
-    glRotatef(190, 0, 0, 1)  # Positioning the hand in a palm-up position
-    glScalef(0.7, 0.7, 0.7)  # Slightly scaled for hand size
-    glutSolidCube(20)  # Hand
-    glPopMatrix()
+#     # The right hand (palm facing upwards)
+#     glPushMatrix()
+#     glTranslatef(0, 0, 40)
+#     glRotatef(190, 0, 0, 1)  # Positioning the hand in a palm-up position
+#     glScalef(0.7, 0.7, 0.7)  # Slightly scaled for hand size
+#     glutSolidCube(20)  # Hand
+#     glPopMatrix()
 
-    # Sword in the palm of the right hand
-    glColor3f(0, 1, 0)  # Red blade color
-    glPushMatrix()
-    glTranslatef(0, 0, 50)  # Position the sword further from the body
-    glRotatef(sword_angle, 1, 0, 0)  # Rotate the sword
-    gluCylinder(gluNewQuadric(), 4, 4, 60, 10, 10)  # Sword hilt and blade
-    glPopMatrix()
+#     # Sword in the palm of the right hand
+#     glColor3f(0, 1, 0)  # Red blade color
+#     glPushMatrix()
+#     glTranslatef(0, 0, 50)  # Position the sword further from the body
+#     glRotatef(sword_angle, 1, 0, 0)  # Rotate the sword
+#     gluCylinder(gluNewQuadric(), 4, 4, 60, 10, 10)  # Sword hilt and blade
+#     glPopMatrix()
 
-    glPopMatrix()
+#     glPopMatrix()
 
-    # === LEFT ARM === (Sword arm)
-    glColor3f(0.7, 0.2, 0.2)  # Reddish color for the left arm
-    glPushMatrix()
-    glTranslatef(-50, 0, 90)  # Start from left shoulder
-    glScalef(0.5, 0.5, 2.5)  # Arm shape
-    glutSolidCube(30)  # Left arm
-    glPopMatrix()
+#     # === LEFT ARM === (Sword arm)
+#     glColor3f(0.7, 0.2, 0.2)  # Reddish color for the left arm
+#     glPushMatrix()
+#     glTranslatef(-50, 0, 90)  # Start from left shoulder
+#     glScalef(0.5, 0.5, 2.5)  # Arm shape
+#     glutSolidCube(30)  # Left arm
+#     glPopMatrix()
 
-    # === LEGS ===
-    glColor3f(0.7, 0.2, 0.2)  # Reddish color for the legs
-    for side in [-1, 1]:
-        glPushMatrix()
-        glTranslatef(side * 20, 0, 15)
-        glScalef(0.6, 0.6, 2.5)
-        glutSolidCube(30)
-        glPopMatrix()
+#     # === LEGS ===
+#     glColor3f(0.7, 0.2, 0.2)  # Reddish color for the legs
+#     for side in [-1, 1]:
+#         glPushMatrix()
+#         glTranslatef(side * 20, 0, 15)
+#         glScalef(0.6, 0.6, 2.5)
+#         glutSolidCube(30)
+#         glPopMatrix()
 
-    # === SHOULDER GUNS === (Gun arm)
-    glColor3f(1, 1, 0)  # Yellow color for the guns
-    for side in [-1, 1]:
-        glPushMatrix()
-        glTranslatef(side * 40, -20, 140)
-        glRotatef(-60, 1, 0, 0)  # Rotate guns to aim downwards
-        gluCylinder(gluNewQuadric(), 5, 5, 40, 10, 10)  # Gun barrels
-        glPopMatrix()
+#     # === SHOULDER GUNS === (Gun arm)
+#     glColor3f(1, 1, 0)  # Yellow color for the guns
+#     for side in [-1, 1]:
+#         glPushMatrix()
+#         glTranslatef(side * 40, -20, 140)
+#         glRotatef(-60, 1, 0, 0)  # Rotate guns to aim downwards
+#         gluCylinder(gluNewQuadric(), 5, 5, 40, 10, 10)  # Gun barrels
+#         glPopMatrix()
 
-    glPopMatrix()
+#     glPopMatrix()
 
 
 
@@ -1939,25 +1993,17 @@ def keyboardListener(key, x, y):
     Handles keyboard inputs for player movement, gun rotation, camera updates, and cheat mode toggles.
     """
     # Move forward (W key)
-    if key == b'w' and game_end_flag==False:  # Move forward
-        p1.move('forward',10)
-        
-
-
-    if key == b's' and game_end_flag==False:  # Move backward
-        p1.move('backward',10)
     
-    # Limit player within grid
     
   
    
 
 
-    if key == b'a' and game_end_flag==False and cheat_mode==False:  # Rotate left
-        p1.rotate(10)
+    # if key == b'a' and game_end_flag==False and cheat_mode==False:  # Rotate left
+    #     p1.rotate(10)
 
-    if key == b'd' and game_end_flag==False and cheat_mode==False:  # Rotate right
-        p1.rotate(-10)
+    # if key == b'd' and game_end_flag==False and cheat_mode==False:  # Rotate right
+    #     p1.rotate(-10)
 
     # # Toggle cheat mode (C key)
     if isinstance(turn_order[current_player],Player) and not game_end_flag:
@@ -2127,7 +2173,7 @@ def mouseListener(button, state, x, y):
     # if button == GLUT_LEFT_BUTTON and state == GLUT_DOWN:
     #     fire_boolet()
 
-        # # Right mouse button toggles camera tracking mode
+        # Right mouse button toggles camera tracking mode
     if button == GLUT_RIGHT_BUTTON and state == GLUT_DOWN:
         print('yes',cheat_mode)
         if first_person:
@@ -2349,6 +2395,8 @@ def showScreen():
 
     setupCamera()  # Configure camera perspective
 
+    draw_fiery_background()
+
     # Draw a random points
     glPointSize(20)
     glBegin(GL_POINTS)
@@ -2358,37 +2406,37 @@ def showScreen():
     # Draw the grid (game floor)
     draw_grid()
     draw_circular_wall()
-    if p1.player_hp>70:
+    if p1.player_hp>100:
         draw_text(10, 480, f"{p1.name} HP: {p1.player_hp}", color=[0, 1, 0])  
     else:
         draw_text(10, 480, f"{p1.name} HP: {p1.player_hp}", color=[1.0, 0.647, 0.0]) 
     draw_text(10, 460, f"{p1.name} MP: {p1.player_mp}", color=[0.53, 0.81, 0.92])  
-    if p2.player_hp>70:
-        draw_text(10+120*1, 480, f"{p2.name} HP: {p2.player_hp}", color=[0, 1, 0])  
+    if p2.player_hp>100:
+        draw_text(10+120*1+3, 480, f"{p2.name} HP: {p2.player_hp}", color=[0, 1, 0])  
     else:
-        draw_text(10+120*1, 480, f"{p2.name} HP: {p2.player_hp}", color=[1.0, 0.647, 0.0]) 
-    draw_text(10+120*1, 460, f"{p2.name} MP: {p2.player_mp}", color=[0.53, 0.81, 0.92])  
+        draw_text(10+120*1+3, 480, f"{p2.name} HP: {p2.player_hp}", color=[1.0, 0.647, 0.0]) 
+    draw_text(10+120*1+3, 460, f"{p2.name} MP: {p2.player_mp}", color=[0.53, 0.81, 0.92])  
     
-    if p3.player_hp > 90:
-        draw_text(10 + 120 * 2, 480, f"{p3.name} HP: {p3.player_hp}", color=[0, 1, 0])
+    if p3.player_hp > 100:
+        draw_text(10 + 120 * 2+3*2, 480, f"{p3.name} HP: {p3.player_hp}", color=[0, 1, 0])
     else:
-        draw_text(10 + 120 * 2, 480, f"{p3.name} HP: {p3.player_hp}", color=[1.0, 0.647, 0.0])
+        draw_text(10 + 120 * 2+3*2, 480, f"{p3.name} HP: {p3.player_hp}", color=[1.0, 0.647, 0.0])
 
-    draw_text(10+120*2, 460, f"{p3.name} MP: {p3.player_mp}", color=[0.53, 0.81, 0.92])  
+    draw_text(10+120*2+3*2, 460, f"{p3.name} MP: {p3.player_mp}", color=[0.53, 0.81, 0.92])  
 
-    if p4.player_hp>90:
+    if p4.player_hp>100:
     
-        draw_text(10+120*3, 480, f"{p4.name} HP: {p4.player_hp}", color=[0, 1, 0])  
+        draw_text(10+120*3+3*3, 480, f"{p4.name} HP: {p4.player_hp}", color=[0, 1, 0])  
     else:
-        draw_text(10 + 120 * 3, 480, f"{p4.name} HP: {p4.player_hp}", color=[1.0, 0.647, 0.0])
-    draw_text(10+120*3, 460, f"{p4.name} MP: {p4.player_mp}", color=[0.53, 0.81, 0.92])  
+        draw_text(10 + 120 * 3+3*3, 480, f"{p4.name} HP: {p4.player_hp}", color=[1.0, 0.647, 0.0])
+    draw_text(10+120*3+3*3, 460, f"{p4.name} MP: {p4.player_mp}", color=[0.53, 0.81, 0.92])  
     
 
     if enemy.hp>700:
         draw_text(10+120*4, 480, f"Metatron HP: {enemy.hp}", color=[0, 1, 0])
     else:
         draw_text(10+120*4, 480, f"Metatron HP: {enemy.hp}", color=[1.0, 0.647, 0.0])
-    draw_text(10+120*4, 460-1, f"Current turn cyle: {turn_cycles}", color=[1, 0, 1])
+    draw_text(10+120*4, 460-1, f"Current turn cycle: {turn_cycles}", color=[1, 0, 1])
     
     draw_text(10, 460-20, f"Current Player: {turn_order[current_player].name}")
     
@@ -2410,9 +2458,12 @@ def showScreen():
     draw_text(10, 397-23-20-12, f"Last Action Result: {last_action}")
     if  game_end_flag and win==False:
         draw_text(10, 397-23-20-12-50, f"In the end, {p1.name} and his friends were no match for {enemy.name}.Game Over!")
+        draw_text(10, 397-23-20-12-50-20, f"Press Q to quit")
     elif game_end_flag and win==True:
         draw_text(10, 397-23-20-12-50, f"With relentless attacks, {p1.name} and his friend triumphed over the great adversary! You win!")
-    
+        draw_text(10, 397-23-20-12-50-20, f"Press Q to quit")
+    elif not game_end_flag:
+        draw_text(10, 397-23-20-12-20, f"Press Q to quit")
 
 
 
@@ -2456,13 +2507,13 @@ def main():
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)  # Double buffering, RGB color, depth test
     glutInitWindowSize(625, 500)  # Window size
     glutInitWindowPosition(0, 0)  # Window position
-    wind = glutCreateWindow(b"3D OpenGL Intro")  # Create the window
+    wind = glutCreateWindow(b"Metatron's Wrath")  # Create the window
     
     # generate_enemy()  # Generate enemies, initially
-    print(enemy_pos)
+    
     glutDisplayFunc(showScreen)  # Register display function
     glutKeyboardFunc(keyboardListener)  # Register keyboard listener
-    glutSpecialFunc(specialKeyListener)
+    # glutSpecialFunc(specialKeyListener)
     glutMouseFunc(mouseListener)
     glutIdleFunc(idle)  # Register the idle function to move the boolet automatically
 
